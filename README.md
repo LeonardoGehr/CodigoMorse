@@ -9,8 +9,6 @@ Requer GCC. A versao inicial do menu foi compilada e testada; esta etapa deve se
 
 ## Compilar e executar
 
-Com GCC instalado, a partir desta pasta:
-
     gcc -std=c11 -Wall -Wextra -Wpedantic src/main.c -o programa.exe
     .\programa.exe
 
