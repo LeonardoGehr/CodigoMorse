@@ -100,6 +100,88 @@ char decodificarLetra(const MorseNode *raiz, const char *codigo) {
     return atual->caractere;
 }
 
+/* Busca o caractere na arvore e registra o caminho percorrido. */
+int buscarCodigo(const MorseNode *no, char letra, char *codigo, size_t nivel) {
+    if (no == NULL) {
+        return 0;
+    }
+    if (no->caractere == letra) {
+        codigo[nivel] = '\0';
+        return 1;
+    }
+    if (nivel == 5) {
+        return 0;
+    }
+    codigo[nivel] = '.';
+    if (buscarCodigo(no->esquerda, letra, codigo, nivel + 1)) {
+        return 1;
+    }
+    codigo[nivel] = '-';
+    return buscarCodigo(no->direita, letra, codigo, nivel + 1);
+}
+
+int codificarTexto(const MorseNode *raiz, const char *texto, char *saida) {
+    size_t tamanho = 0;
+    for (size_t i = 0; texto[i] != '\0'; i++) {
+        char letra = texto[i];
+        char codigo[6];
+        if (letra >= 'a' && letra <= 'z') {
+            letra = (char)(letra - 'a' + 'A');
+        }
+        if (letra == ' ') {
+            strcpy(codigo, "/");
+        } else if (!buscarCodigo(raiz, letra, codigo, 0)) {
+            puts("Texto invalido: use letras A-Z, numeros e espacos, sem acentos.");
+            return 0;
+        }
+        if (i != 0) {
+            saida[tamanho++] = ' ';
+        }
+        size_t quantidade = strlen(codigo);
+        memcpy(saida + tamanho, codigo, quantidade);
+        tamanho += quantidade;
+    }
+    saida[tamanho] = '\0';
+    return 1;
+}
+
+int decodificarTexto(const MorseNode *raiz, const char *morse, char *saida) {
+    char codigo[6];
+    size_t tamanhoCodigo = 0;
+    size_t tamanhoSaida = 0;
+    for (size_t i = 0;; i++) {
+        char c = morse[i];
+        if (c == '.' || c == '-') {
+            if (tamanhoCodigo == 5) {
+                puts("Codigo Morse invalido: sequencia muito longa.");
+                return 0;
+            }
+            codigo[tamanhoCodigo++] = c;
+        } else if (c == ' ' || c == '/' || c == '\0') {
+            if (tamanhoCodigo != 0) {
+                codigo[tamanhoCodigo] = '\0';
+                char letra = decodificarLetra(raiz, codigo);
+                if (letra == '\0') {
+                    puts("Codigo Morse invalido: simbolo nao cadastrado.");
+                    return 0;
+                }
+                saida[tamanhoSaida++] = letra;
+                tamanhoCodigo = 0;
+            }
+            if (c == '/') {
+                saida[tamanhoSaida++] = ' ';
+            }
+            if (c == '\0') {
+                break;
+            }
+        } else {
+            puts("Morse invalido: use somente ponto, traco, barra e espaco.");
+            return 0;
+        }
+    }
+    saida[tamanhoSaida] = '\0';
+    return 1;
+}
 void mostrarArvore(const MorseNode *no, int nivel, const char *ligacao) {
     if (no == NULL) {
         return;
@@ -154,7 +236,9 @@ int main(void) {
     }
 
     int opcao;
-    char entrada[128];
+    char entrada[1024];
+    /* Cada caractere de entrada gera no maximo 5 sinais e um separador. */
+    char saida[sizeof entrada * 6];
     for (;;) {
         printf("\nCodigo Morse\n1 - Codificar texto\n2 - Decodificar Morse\n3 - Codificar arquivo\n4 - Decodificar arquivo\n5 - Mostrar arvore\n0 - Encerrar\nOpcao: ");
         if (!lerLinha(entrada, sizeof entrada)) {
@@ -168,16 +252,20 @@ int main(void) {
         if (opcao == 0) {
             break;
         }
-        if (opcao == 2) {
-            printf("Digite o codigo Morse de uma letra ou numero: ");
+        if (opcao == 1 || opcao == 2) {
+            printf("%s", opcao == 1 ? "Digite o texto: " : "Digite a mensagem Morse em uma linha: ");
             if (!lerLinha(entrada, sizeof entrada)) {
                 break;
             }
-            char letra = decodificarLetra(raiz, entrada);
-            if (letra == '\0') {
-                puts("Codigo invalido ou ainda nao cadastrado.");
-            } else {
-                printf("Resultado: %c\n", letra);
+            if (entrada[0] == '\0') {
+                puts("Digite uma mensagem nao vazia.");
+                continue;
+            }
+            int sucesso = opcao == 1
+                ? codificarTexto(raiz, entrada, saida)
+                : decodificarTexto(raiz, entrada, saida);
+            if (sucesso) {
+                printf("Resultado: %s\n", saida);
             }
         } else if (opcao == 5) {
             mostrarArvore(raiz, 0, "Raiz");
