@@ -4,7 +4,7 @@ Trabalho TDE 2 de Estruturas de Dados, em C.
 
 ## Feito agora
 
-Menu no terminal, arvore binaria dinamica com E (.) e T (-), decodificacao de uma letra e diagrama da arvore. Codificacao, arquivos e demais simbolos ainda nao foram implementados.
+Menu no terminal, arvore binaria dinamica com as letras A-Z e os numeros 0-9, decodificacao de uma letra e diagrama da arvore. Codificacao, decodificacao de mensagens completas e leitura de arquivos ainda nao foram implementadas.
 Requer GCC. A versao inicial do menu foi compilada e testada; esta etapa deve ser validada antes do commit.
 
 ## Compilar e executar

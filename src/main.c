@@ -41,6 +41,45 @@ int inserir(MorseNode *raiz, const char *codigo, char caractere) {
     return 1;
 }
 
+int construirArvore(MorseNode *raiz) {
+    /* Chamadas explicitas de insercao, conforme o enunciado. */
+    return inserir(raiz, ".-", 'A') &&
+           inserir(raiz, "-...", 'B') &&
+           inserir(raiz, "-.-.", 'C') &&
+           inserir(raiz, "-..", 'D') &&
+           inserir(raiz, ".", 'E') &&
+           inserir(raiz, "..-.", 'F') &&
+           inserir(raiz, "--.", 'G') &&
+           inserir(raiz, "....", 'H') &&
+           inserir(raiz, "..", 'I') &&
+           inserir(raiz, ".---", 'J') &&
+           inserir(raiz, "-.-", 'K') &&
+           inserir(raiz, ".-..", 'L') &&
+           inserir(raiz, "--", 'M') &&
+           inserir(raiz, "-.", 'N') &&
+           inserir(raiz, "---", 'O') &&
+           inserir(raiz, ".--.", 'P') &&
+           inserir(raiz, "--.-", 'Q') &&
+           inserir(raiz, ".-.", 'R') &&
+           inserir(raiz, "...", 'S') &&
+           inserir(raiz, "-", 'T') &&
+           inserir(raiz, "..-", 'U') &&
+           inserir(raiz, "...-", 'V') &&
+           inserir(raiz, ".--", 'W') &&
+           inserir(raiz, "-..-", 'X') &&
+           inserir(raiz, "-.--", 'Y') &&
+           inserir(raiz, "--..", 'Z') &&
+           inserir(raiz, "-----", '0') &&
+           inserir(raiz, ".----", '1') &&
+           inserir(raiz, "..---", '2') &&
+           inserir(raiz, "...--", '3') &&
+           inserir(raiz, "....-", '4') &&
+           inserir(raiz, ".....", '5') &&
+           inserir(raiz, "-....", '6') &&
+           inserir(raiz, "--...", '7') &&
+           inserir(raiz, "---..", '8') &&
+           inserir(raiz, "----.", '9');
+}
 char decodificarLetra(const MorseNode *raiz, const char *codigo) {
     const MorseNode *atual = raiz;
     if (codigo[0] == '\0') {
@@ -108,7 +147,7 @@ int lerLinha(char *entrada, int capacidade) {
 
 int main(void) {
     MorseNode *raiz = criarNo('\0');
-    if (raiz == NULL || !inserir(raiz, ".", 'E') || !inserir(raiz, "-", 'T')) {
+    if (raiz == NULL || !construirArvore(raiz)) {
         fputs("Nao foi possivel criar a arvore.\n", stderr);
         liberarArvore(raiz);
         return EXIT_FAILURE;
@@ -130,7 +169,7 @@ int main(void) {
             break;
         }
         if (opcao == 2) {
-            printf("Digite . para E ou - para T (uma letra nesta etapa): ");
+            printf("Digite o codigo Morse de uma letra ou numero: ");
             if (!lerLinha(entrada, sizeof entrada)) {
                 break;
             }
