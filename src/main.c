@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 typedef struct MorseNode {
     char caractere;
@@ -182,6 +183,100 @@ int decodificarTexto(const MorseNode *raiz, const char *morse, char *saida) {
     saida[tamanhoSaida] = '\0';
     return 1;
 }
+/* Leitura binaria preserva quebras de linha para validar o arquivo Morse. */
+char *lerArquivo(const char *caminho) {
+    FILE *arquivo = fopen(caminho, "rb");
+    if (arquivo == NULL) {
+        puts("Nao foi possivel abrir o arquivo. Confira o caminho e as permissoes.");
+        return NULL;
+    }
+    size_t capacidade = 1024;
+    size_t tamanho = 0;
+    char *texto = malloc(capacidade);
+    if (texto == NULL) {
+        fclose(arquivo);
+        puts("Memoria insuficiente.");
+        return NULL;
+    }
+    int c;
+    while ((c = fgetc(arquivo)) != EOF) {
+        if (c == '\0') {
+            puts("Arquivo invalido: contem byte nulo.");
+            free(texto);
+            fclose(arquivo);
+            return NULL;
+        }
+        if (tamanho == capacidade - 1) {
+            if (capacidade > SIZE_MAX / 2) {
+                puts("Arquivo muito grande.");
+                free(texto);
+                fclose(arquivo);
+                return NULL;
+            }
+            char *novo = realloc(texto, capacidade * 2);
+            if (novo == NULL) {
+                puts("Memoria insuficiente.");
+                free(texto);
+                fclose(arquivo);
+                return NULL;
+            }
+            texto = novo;
+            capacidade *= 2;
+        }
+        texto[tamanho++] = (char)c;
+    }
+    int erro = ferror(arquivo);
+    fclose(arquivo);
+    if (erro || tamanho == 0) {
+        puts(erro ? "Erro ao ler o arquivo." : "Arquivo vazio.");
+        free(texto);
+        return NULL;
+    }
+    texto[tamanho] = '\0';
+    return texto;
+}
+
+void converterArquivo(const MorseNode *raiz, const char *caminho, int codificar) {
+    char *texto = lerArquivo(caminho);
+    if (texto == NULL) {
+        return;
+    }
+    /* No texto comum, cada quebra de linha representa um espaco.
+       CRLF e tratado como uma unica quebra. No Morse nada e removido. */
+    if (codificar) {
+        size_t destino = 0;
+        for (size_t origem = 0; texto[origem] != '\0'; origem++) {
+            if (texto[origem] == '\r') {
+                if (texto[origem + 1] == '\n') {
+                    origem++;
+                }
+                texto[destino++] = ' ';
+            } else {
+                texto[destino++] = texto[origem] == '\n' ? ' ' : texto[origem];
+            }
+        }
+        texto[destino] = '\0';
+    }
+    size_t tamanho = strlen(texto);
+    if (tamanho > (SIZE_MAX - 1) / 6) {
+        puts("Arquivo muito grande.");
+        free(texto);
+        return;
+    }
+    char *saida = malloc(tamanho * 6 + 1);
+    if (saida == NULL) {
+        puts("Memoria insuficiente.");
+        free(texto);
+        return;
+    }
+    int sucesso = codificar ? codificarTexto(raiz, texto, saida)
+                           : decodificarTexto(raiz, texto, saida);
+    if (sucesso) {
+        printf("Resultado: %s\n", saida);
+    }
+    free(saida);
+    free(texto);
+}
 void mostrarArvore(const MorseNode *no, int nivel, const char *ligacao) {
     if (no == NULL) {
         return;
@@ -269,8 +364,16 @@ int main(void) {
             }
         } else if (opcao == 5) {
             mostrarArvore(raiz, 0, "Raiz");
-        } else if (opcao >= 1 && opcao <= 4) {
-            puts("Funcionalidade ainda em desenvolvimento.");
+        } else if (opcao == 3 || opcao == 4) {
+            printf("Caminho do arquivo (sem aspas): ");
+            if (!lerLinha(entrada, sizeof entrada)) {
+                break;
+            }
+            if (entrada[0] == '\0') {
+                puts("Informe um caminho nao vazio.");
+            } else {
+                converterArquivo(raiz, entrada, opcao == 3);
+            }
         } else {
             puts("Opcao invalida.");
         }
