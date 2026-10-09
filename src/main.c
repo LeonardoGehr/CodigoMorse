@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <errno.h>
+#include <limits.h>
 
 typedef struct MorseNode {
     char caractere;
@@ -43,7 +45,6 @@ int inserir(MorseNode *raiz, const char *codigo, char caractere) {
 }
 
 int construirArvore(MorseNode *raiz) {
-    /* Chamadas explicitas de insercao, conforme o enunciado. */
     return inserir(raiz, ".-", 'A') &&
            inserir(raiz, "-...", 'B') &&
            inserir(raiz, "-.-.", 'C') &&
@@ -183,6 +184,7 @@ int decodificarTexto(const MorseNode *raiz, const char *morse, char *saida) {
     saida[tamanhoSaida] = '\0';
     return 1;
 }
+
 /* Leitura binaria preserva quebras de linha para validar o arquivo Morse. */
 char *lerArquivo(const char *caminho) {
     FILE *arquivo = fopen(caminho, "rb");
@@ -241,8 +243,6 @@ void converterArquivo(const MorseNode *raiz, const char *caminho, int codificar)
     if (texto == NULL) {
         return;
     }
-    /* No texto comum, cada quebra de linha representa um espaco.
-       CRLF e tratado como uma unica quebra. No Morse nada e removido. */
     if (codificar) {
         size_t destino = 0;
         for (size_t origem = 0; texto[origem] != '\0'; origem++) {
@@ -311,7 +311,7 @@ int lerLinha(char *entrada, int capacidade) {
         *fim = '\0';
     } else {
         int c = getchar();
-        if (c != EOF) {
+        if (c != EOF && c != '\n') {
             while (c != '\n' && c != EOF) {
                 c = getchar();
             }
@@ -332,6 +332,7 @@ int main(void) {
 
     int opcao;
     char entrada[1024];
+    
     /* Cada caractere de entrada gera no maximo 5 sinais e um separador. */
     char saida[sizeof entrada * 6];
     for (;;) {
@@ -339,11 +340,21 @@ int main(void) {
         if (!lerLinha(entrada, sizeof entrada)) {
             break;
         }
-        char extra;
-        if (sscanf(entrada, "%d %c", &opcao, &extra) != 1) {
+        char *fimOpcao;
+        errno = 0;
+        long valor = strtol(entrada, &fimOpcao, 10);
+        if (fimOpcao == entrada || errno == ERANGE || valor < INT_MIN || valor > INT_MAX) {
             puts("Digite uma opcao numerica valida.");
             continue;
         }
+        while (*fimOpcao == ' ' || *fimOpcao == '\t') {
+            fimOpcao++;
+        }
+        if (*fimOpcao != '\0') {
+            puts("Digite uma opcao numerica valida.");
+            continue;
+        }
+        opcao = (int)valor;
         if (opcao == 0) {
             break;
         }
